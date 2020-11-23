@@ -8,6 +8,7 @@
 
 /**
  * Moves range to sheet (destructive)
+ *
  * @param range
  * @param sheet
  */
@@ -18,6 +19,7 @@ function moveSubmissionToSheet(range, sheet){
 
 /**
  * Copies range to sheet
+ *
  * @param range
  * @param sheet
  */
@@ -28,6 +30,7 @@ function copySubmissionToSheet(range, sheet){
 
 /**
  * Returns a 1x1 range at the beginning of the first empty row in the given Sheet
+ *
  * @param sheet
  * @returns {*}
  */
@@ -39,9 +42,37 @@ function getFirstEmptyRange(sheet){
 }
 
 /**
+ * Returns current periodic sheet.
+ * Sheet will be created if it does not exist - a named template shift can be supplied
+ *
+ * @param abbreviated - Whether to use abbreviated names
+ * @param shift - Time periods to shift by (+/-)
+ * @param template - Name of template sheet for sheet creation
+ * @returns Sheet
+ */
+function getPeriodicSheet(abbreviated=true, shift=0, template=null){
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    let sheetName = getMonthlySheetName(abbreviated, shift);
+    var sheet = ss.getSheetByName(sheetName);
+
+    if(!sheet){
+        if(template){
+            sheet = getNewSheetFromTemplate(template);
+            sheet.setName(sheetName);
+        }else{
+            sheet = ss.insertSheet(sheetName);
+        }
+    }
+
+    return sheet;
+}
+
+/**
  * Returns full/abbreviated sheet name for current month (or shifted by +/- x months)
- * @param abbreviated
- * @param shift
+ *
+ * @param abbreviated - Whether to use abbreviated names
+ * @param shift - Time periods to shift by (+/-)
  */
 function getMonthlySheetName(abbreviated=true, shift=0){
     const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -66,4 +97,18 @@ function getMonthlySheetName(abbreviated=true, shift=0){
     }else{
         return month + " " + year;
     }
+}
+
+/**
+ * Returns copy of template sheet
+ *
+ * @param template
+ * @returns {*}
+ */
+function getNewSheetFromTemplate(template){
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    ss.getSheetByName(template).copyTo(ss);
+
+    return ss.getSheetByName("Copy of "+template);
 }
