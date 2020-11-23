@@ -37,3 +37,33 @@ function getFirstEmptyRange(sheet){
 
     return sheet.getRange(first_empty_row, 1);
 }
+
+/**
+ * Returns full/abbreviated sheet name for current month (or shifted by +/- x months)
+ * @param abbreviated
+ * @param shift
+ */
+function getMonthlySheetName(abbreviated=true, shift=0){
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+    var date = new Date();
+
+    var monthNum = date.getMonth() + shift;
+    var year = date.getFullYear();
+
+    if(monthNum < 0){
+        monthNum = 11;
+        year--;
+    }else if(monthNum > 11){
+        monthNum = 0;
+        year++;
+    }
+
+    var month = monthNames[monthNum];
+
+    if(abbreviated){
+        return month.substr(0,3).toUpperCase() + year.toString().slice(-2);
+    }else{
+        return month + " " + year;
+    }
+}
