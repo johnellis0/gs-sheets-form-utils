@@ -45,15 +45,16 @@ function getFirstEmptyRange(sheet){
  * Returns current periodic sheet.
  * Sheet will be created if it does not exist - a named template shift can be supplied
  *
+ * @param period - "month" / "year"
  * @param abbreviated - Whether to use abbreviated names
  * @param shift - Time periods to shift by (+/-)
  * @param template - Name of template sheet for sheet creation
  * @returns Sheet
  */
-function getPeriodicSheet(abbreviated=true, shift=0, template=null){
+function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=null){
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    let sheetName = getMonthlySheetName(abbreviated, shift);
+    let sheetName = period == "month" ? getMonthlySheetName(abbreviated, shift) : getYearlySheetName(shift);
     var sheet = ss.getSheetByName(sheetName);
 
     if(!sheet){
@@ -97,6 +98,18 @@ function getMonthlySheetName(abbreviated=true, shift=0){
     }else{
         return month + " " + year;
     }
+}
+
+/**
+ * Return sheet name for current year (or shifted by +/- x years)
+ *
+ * @param shift
+ * @returns {number}
+ */
+function getYearlySheetName(shift=0){
+    var date = new Date();
+
+    return date.getFullYear() + shift;
 }
 
 /**
