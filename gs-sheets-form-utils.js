@@ -32,6 +32,17 @@ function copySubmissionToSheet(range, sheet){
 }
 
 /**
+ * Returns range with end values omitted.
+ * Useful to remove unnecessary form fields
+ *
+ * @param range
+ * @param amount - Amount of values to omit from end of range.
+ */
+function trimRowRange(range, amount){
+    return range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() - amount);
+}
+
+/**
  * Returns a 1x1 range at the beginning of the first empty row in the given Sheet
  *
  * @param sheet
