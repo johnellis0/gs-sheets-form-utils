@@ -13,8 +13,9 @@
  * @param sheet
  */
 function moveSubmissionToSheet(range, sheet){
-    copySubmissionToSheet(range, sheet);
+    let destination = copySubmissionToSheet(range, sheet);
     range.getSheet().deleteRow(range.getRow());
+    return destination
 }
 
 /**
@@ -26,6 +27,8 @@ function moveSubmissionToSheet(range, sheet){
 function copySubmissionToSheet(range, sheet){
     let destination = getFirstEmptyRange(sheet);
     range.copyTo(destination, {contentsOnly:true});
+
+    return sheet.getRange(destination.getRow(), destination.getColumn(), 1, range.getNumColumns());
 }
 
 /**
