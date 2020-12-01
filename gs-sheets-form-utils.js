@@ -1,9 +1,10 @@
 /* Google Scripts Sheets Form Utilities
  * By John Ellis
  * https://github.com/johnellis0/gs-sheets-form-utils
+ * Released under the MIT License
  *
- * Provides utilities to merge form responses into another sheet, check & remove duplicates, automatically rotate
- * form submission sheet monthly/yearly
+ * Google Apps Script for Google Sheets that adds utility functions for working with Google Form submissions within
+ * a Google Sheets file
  */
 
 /**
