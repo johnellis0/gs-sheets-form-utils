@@ -139,7 +139,29 @@ function getNewSheetFromTemplate(template){
     ss.getSheetByName(template).copyTo(ss);
 
     return ss.getSheetByName("Copy of "+template);
-}function isRowEmpty(range, ignoreCheckbox=true){
+}
+
+
+function getRangesInUse(sheet, excludeFrozen=true) {
+    var frozenRows = excludeFrozen ? sheet.getFrozenRows() : 0;
+
+    var rowsAmt = sheet.getLastRow() - frozenRows;
+    var maxCols = sheet.getLastColumn();
+
+    var ranges = [];
+
+    for(var i=0; i<rowsAmt; i++){
+        var row = i + 1 + frozenRows; // Add 1 as Rows start at 1 and offset by frozen rows
+        var range = sheet.getRange(row, 1, 1, maxCols);
+
+        if(range.getValues()[0].some(val => val !== ""))
+            ranges.push(range); // If the range contains at least one value add to array
+    }
+
+    return ranges;
+}
+
+function isRowEmpty(range, ignoreCheckbox=true){
     range.getValues()[0].forEach((val, i) => {
         if(val !== "" && (ignoreCheckbox && range.getDataValidations()[0][i] !== SpreadsheetApp.DataValidationCriteria.CHECKBOX))
             return false;
