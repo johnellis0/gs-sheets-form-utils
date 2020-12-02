@@ -139,4 +139,10 @@ function getNewSheetFromTemplate(template){
     ss.getSheetByName(template).copyTo(ss);
 
     return ss.getSheetByName("Copy of "+template);
+}function isRowEmpty(range, ignoreCheckbox=true){
+    range.getValues()[0].forEach((val, i) => {
+        if(val !== "" && (ignoreCheckbox && range.getDataValidations()[0][i] !== SpreadsheetApp.DataValidationCriteria.CHECKBOX))
+            return false;
+    });
+    return true;
 }
