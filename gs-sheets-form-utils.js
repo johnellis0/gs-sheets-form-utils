@@ -168,3 +168,17 @@ function isRowEmpty(range, ignoreCheckbox=true){
     });
     return true;
 }
+
+function sweep(sheetFrom, sheetTo, deleteFromSource=true){
+    if(deleteFromSource){
+        // Get ranges & move them across (in reverse so deleting a row does not shift ranges below it)
+        getRangesInUse(sheetFrom).reverse().forEach((range) => {
+            moveSubmissionToSheet(range, sheetTo);
+        });
+    }else{
+        getRangesInUse(sheetFrom).forEach((range) => {
+            copySubmissionToSheet(range, sheetTo);
+        });
+    }
+}
+
