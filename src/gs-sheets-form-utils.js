@@ -235,13 +235,37 @@ function trimRowRange(range, amount){
 /**
  *
  * @param {Sheet} sheet
+ * @param index
+ * @param ignoreCheckboxes
  * @returns {Range}
+ * @ignore
  */
-function getFirstEmptyRow(sheet){
-    var first_empty_row = sheet.getLastRow() + 1;
-    sheet.insertRowBefore(first_empty_row);
+function getFirstEmptyRow(sheet, index=1, ignoreCheckboxes=true){
+    var cols = sheet.getMaxColumns();
+    var getRow = (num) => sheet.getRange(num, 1, 1, cols);
 
-    return sheet.getRange(first_empty_row, 1);
+    var min = sheet.getFrozenRows() + 1; // Row must come after the title rows
+    var max = sheet.getLastRow(); // Last row with data
+
+    var range = sheet.getRange(1, index, max, 1);
+    var data = range.getValues().flat();
+
+    var i = max;
+    do{ i--; }while(i>=min && data[i] === "");
+    i--; // Subtract 1 to compensate for initial i++ in below loop
+    do{ i++; }while(i<max && !isRangeEmpty(getRow(i+1), ignoreCheckboxes))
+
+    var row = i + 1; // Add 1 for index offset
+
+    if(row > max){
+        // If all rows are filled then insert 1 at end
+        sheet.insertRowAfter(max);
+        return sheet.getRange(max+1, 1);
+    }else{
+        // Insert row before empty row to keep same amt of empty rows
+        sheet.insertRowBefore(row);
+        return sheet.getRange(row, 1);
+    }
 }
 
 /**
