@@ -246,21 +246,28 @@ function trimRowRange(range, amount){
  * @ignore
  */
 function getFirstEmptyRow(sheet, index=1, ignoreCheckboxes=true){
-    var cols = sheet.getMaxColumns();
-    var getRow = (num) => sheet.getRange(num, 1, 1, cols);
+    var row, max;
 
-    var min = sheet.getFrozenRows() + 1; // Row must come after the title rows
-    var max = sheet.getLastRow(); // Last row with data
+    if(ignoreCheckboxes){
+        row = sheet.getLastRow() + 1; // Last row with data + 1
+        max = sheet.getMaxRows(); // Max row
+    }else{
+        var cols = sheet.getMaxColumns();
+        var getRow = (num) => sheet.getRange(num, 1, 1, cols);
 
-    var range = sheet.getRange(1, index, max, 1);
-    var data = range.getValues().flat();
+        var min = sheet.getFrozenRows() + 1; // Row must come after the title rows
+        max = sheet.getLastRow(); // Last row with data
 
-    var i = max;
-    do{ i--; }while(i>=min && data[i] === "");
-    i--; // Subtract 1 to compensate for initial i++ in below loop
-    do{ i++; }while(i<max && !isRangeEmpty(getRow(i+1), ignoreCheckboxes))
+        var range = sheet.getRange(1, index, max, 1);
+        var data = range.getValues().flat();
 
-    var row = i + 1; // Add 1 for index offset
+        var i = max;
+        do{ i--; }while(i>=min && data[i] === "");
+        i--; // Subtract 1 to compensate for initial i++ in below loop
+        do{ i++; }while(i<max && !isRangeEmpty(getRow(i+1), ignoreCheckboxes))
+
+        row = i + 1; // Add 1 for index offset
+    }
 
     if(row > max){
         // If all rows are filled then insert 1 at end
