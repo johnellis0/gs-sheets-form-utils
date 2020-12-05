@@ -339,10 +339,16 @@ function isRangeEmpty(range, ignoreCheckbox=true){
     if(!ignoreCheckbox)
         return range.isBlank();
 
-    range.getValues()[0].forEach((val, i) => {
-        if(val !== "" && range.getDataValidations()[0][i] !== SpreadsheetApp.DataValidationCriteria.CHECKBOX)
+    var values = range.getValues().flat();
+    var validations = range.getDataValidations().flat();
+
+    for(var i=0; i<values.length; i++){
+        if(values[i] !== "" &&
+            !(validations[i] !== null &&
+                validations[i].getCriteriaType() === SpreadsheetApp.DataValidationCriteria.CHECKBOX))
             return false;
-    });
+    }
+
     return true;
 }
 
