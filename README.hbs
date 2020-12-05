@@ -1,5 +1,12 @@
 # Google Scripts Spreadsheet Form Utilities
-Google Apps Script utilities for using Google Forms with Google Sheets
+Google Scripts utility library for using Google Forms with Google Sheets.
+
+Features:
+- Detect & remove/flag duplicate submissions
+- Split form submissions into per-month / per-year sheets
+- Move submissions to bottom of specific sheet, allowing both form submissions and manual entries to be ordered sequentially
+- Automatically archive submissions
+- Check if row is blank despite checkbox data validations
 
 # Example usage
 
@@ -24,6 +31,10 @@ This uses a digest column which is appended to the end of the moved range, this 
 
 Using a digest column improves performance as only one column needs to be checked vs how many are in the range.
 
+### Calculate duplicate yourself
+
+This allows for more customization of actions to take if it is a duplicate; eg. not moving the range at all.
+
 ```javascript
 function onFormSubmit(e){
     var range = e.range;
@@ -36,6 +47,32 @@ function onFormSubmit(e){
 
     if(duplicate)
         range.setBackground("red");
+}
+```
+
+### Using duplicate callback
+
+`moveToFirstEmptyRow` and `copyToFirstEmptyRow` can take a callback as the 4th argument which will be ran if the range is detected as a duplicate. The 3rd argument is whether to use a digest column or not. More info and examples available in the API Reference below.
+
+```javascript
+function onFormSubmit(e){
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    moveToFirstEmptyRow(e.range, sheet, true, (range) => { // Move range to sheet "Responses" with callback if duplicate
+        range.setBackground("red"); // Highlight moved range in red if it is a duplicate
+    })
+}
+```
+
+## Process form submissions in bulk
+
+```javascript
+function scheduledBulkProcess(){
+    var submissionsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    var sheet = getPeriodicSheet("month");
+
+
 }
 ```
 

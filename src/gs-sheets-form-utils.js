@@ -11,12 +11,23 @@
  * Moves range to first empty row in sheet
  * @param {Range} range Range to move
  * @param {Sheet} sheet Sheet to insert range into
+ * @param {boolean} digest Whether to add digest to destination range
+ * @param {function} duplicateCallback Callback for if the range is detected as a duplicate. Will use digest duplicate
+ * detection if `digest` is set to true. Callback will be called with the destination range as the first parameter.
  * @returns {Range} New range
  * @example
 function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
     moveToFirstEmptyRow(e.range, sheet);
+}
+ * @example
+function onFormSubmit(e){
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    moveToFirstEmptyRow(e.range, sheet, true, (range) => { // Move range to sheet "Responses" with duplicate callback
+        range.setBackground("red"); // Highlight moved range in red if it is a duplicate
+    })
 }
  */
 function moveToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null){
@@ -29,12 +40,23 @@ function moveToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null)
  * Copies range to first empty row in sheet
  * @param {Range} range Range to copy
  * @param {Sheet} sheet Sheet to insert range into
+ * @param {boolean} digest Whether to add digest to destination range
+ * @param {function} duplicateCallback Callback for if the range is detected as a duplicate. Will use digest duplicate
+ * detection if `digest` is set to true. Callback will be called with the destination range as the first parameter.
  * @returns {Range} New range
  * @example
-function onFormSubmit(e){ // Copy all form submissions to sheet "Responses"
+ function onFormSubmit(e){ // Copy all form submissions to sheet "Responses"
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
-    moveToFirstEmptyRow(e.range, sheet);
+    copyToFirstEmptyRow(e.range, sheet);
+}
+ * @example
+function onFormSubmit(e){
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    copyToFirstEmptyRow(e.range, sheet, true, (range) => { // Copy range to sheet "Responses" with duplicate callback
+        range.setBackground("red"); // Highlight moved range in red if it is a duplicate
+    })
 }
  */
 function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null){
@@ -53,28 +75,6 @@ function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null)
 }
 
 /**
- * Returns range with specified amount of columns removed from the end
- * @param {Range} range Range to trim
- * @param {number} amount How many columns to remove from range
- * @returns {Range} Shortened range
- */
-function trimRowRange(range, amount){
-    return range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() - amount);
-}
-
-/**
- *
- * @param {Sheet} sheet
- * @returns {Range}
- */
-function getFirstEmptyRow(sheet){
-    var first_empty_row = sheet.getLastRow() + 1;
-    sheet.insertRowBefore(first_empty_row);
-
-    return sheet.getRange(first_empty_row, 1);
-}
-
-/**
  * Returns current periodic sheet.
  *
  * Sheet will be created if it does not exist - a named template sheet can be supplied for this.
@@ -85,15 +85,15 @@ function getFirstEmptyRow(sheet){
  * @param {String} template Name of template sheet for sheet creation
  * @returns Sheet
  * @example
-// For example if the date were 01/01/2020 it would give the following sheet names:
-getPeriodicSheet("month"); // JAN20
-getPeriodicSheet("year"); // 2020
-getPeriodicSheet("month", false); // January 2020
-getPeriodicSheet("month", true, 1); // MAR20
-getPeriodicSheet("month", true, -1); // DEC19
+ // For example if the date were 01/01/2020 it would give the following sheet names:
+ getPeriodicSheet("month"); // JAN20
+ getPeriodicSheet("year"); // 2020
+ getPeriodicSheet("month", false); // January 2020
+ getPeriodicSheet("month", true, 1); // MAR20
+ getPeriodicSheet("month", true, -1); // DEC19
 
-var templateName = "Template";
-getPeriodicSheet("month", true, 0, templateName); // Will make a copy of "Template" called 'JAN20'
+ var templateName = "Template";
+ getPeriodicSheet("month", true, 0, templateName); // Will make a copy of "Template" called 'JAN20'
  */
 function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=null){
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -122,6 +122,98 @@ function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=nu
     }
 
     return sheet;
+}
+
+/**
+ * Checks sheet for a duplicate of range
+ * @param {Range} range Range to check for a duplicate of
+ * @param {Sheet} sheet Sheet to check for duplicates
+ * @param {boolean} useDigest Whether to use a digest column or if to check row values individually
+ * @param {number} last Last row to check
+ * @param {number} skip Columns to skip when calculating digest
+ * @returns {boolean}
+ */
+function isDuplicate(range, sheet, useDigest=true, last=null, skip=1){
+    last = last !== null ? last : sheet.getLastRow();
+
+    Logger.log(last);
+
+    if(last === 0)
+        return false;
+
+    if(useDigest){
+        var digest = getDigest(range, skip);
+        var col = range.getNumColumns() + 1;
+
+        var data = sheet.getRange(1, col, last, 1).getValues();
+        return data.flat().includes(digest);
+    }else{
+        // search all other rows
+    }
+}
+
+/**
+ * Appends cell to end of range containing digest of range values.
+ *
+ * Can be used to create a digest column and used with {@link isDuplicate} to check for duplicates more efficiently.
+ *
+ * @param {Range} range Range to add digest to
+ * @param {number} skip Columns to skip from start of range (eg. to avoid timestamp)
+ * @param {String} digest Calculated digest (will be calculated if not provided)
+ * @returns {Range} Range with digest cell appended
+ */
+function addDigest(range, skip=1, digest=null){
+    // Get digest
+    digest = digest === null ? getDigest(range, skip) : digest;
+
+    // Extend range to append a cell
+    range = range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() + 1);
+
+    // Add digest to newly appended cell
+    range.getCell(1, range.getNumColumns()).setValue(digest);
+
+    return range; // Return extended range
+}
+
+/**
+ *
+ * @param sheetFrom
+ * @param sheetTo
+ * @param deleteFromSource
+ */
+function sweep(sheetFrom, sheetTo, deleteFromSource=true){
+    if(deleteFromSource){
+        // Get ranges & move them across (in reverse so deleting a row does not shift ranges below it)
+        getRangesInUse(sheetFrom).reverse().forEach((range) => {
+            moveToFirstEmptyRow(range, sheetTo);
+        });
+    }else{
+        getRangesInUse(sheetFrom).forEach((range) => {
+            copyToFirstEmptyRow(range, sheetTo);
+        });
+    }
+}
+
+/**
+ * Returns range with specified amount of columns removed from the end
+ * @param {Range} range Range to trim
+ * @param {number} amount How many columns to remove from range
+ * @returns {Range} Shortened range
+ */
+function trimRowRange(range, amount){
+    return range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() - amount);
+}
+
+/**
+ *
+ * @param {Sheet} sheet
+ * @returns {Range}
+ */
+function getFirstEmptyRow(sheet){
+    var first_empty_row = sheet.getLastRow() + 1;
+    sheet.insertRowBefore(first_empty_row);
+
+    return sheet.getRange(first_empty_row, 1);
 }
 
 /**
@@ -221,25 +313,6 @@ function isRangeEmpty(range, ignoreCheckbox=true){
 }
 
 /**
- *
- * @param sheetFrom
- * @param sheetTo
- * @param deleteFromSource
- */
-function sweep(sheetFrom, sheetTo, deleteFromSource=true){
-    if(deleteFromSource){
-        // Get ranges & move them across (in reverse so deleting a row does not shift ranges below it)
-        getRangesInUse(sheetFrom).reverse().forEach((range) => {
-            moveToFirstEmptyRow(range, sheetTo);
-        });
-    }else{
-        getRangesInUse(sheetFrom).forEach((range) => {
-            copyToFirstEmptyRow(range, sheetTo);
-        });
-    }
-}
-
-/**
  * Calculate the digest of given range. Default settings skip the first cell (timestamp for form submissions) and use
  * SHA1 as the digest algorithm
  * @param {Range} range Range to calculate the digest of
@@ -253,55 +326,4 @@ function getDigest(range, skip=1, encoding=Utilities.DigestAlgorithm.SHA_1){
     Logger.log(values);
 
     return Utilities.base64Encode(Utilities.computeDigest(encoding, values.join()));
-}
-
-/**
- * Checks sheet for a duplicate of range
- * @param {Range} range Range to check for a duplicate of
- * @param {Sheet} sheet Sheet to check for duplicates
- * @param {boolean} useDigest Whether to use a digest column or if to check row values individually
- * @param {number} last Last row to check
- * @param {number} skip Columns to skip when calculating digest
- * @returns {boolean}
- */
-function isDuplicate(range, sheet, useDigest=true, last=null, skip=1){
-    last = last !== null ? last : sheet.getLastRow();
-
-    Logger.log(last);
-
-    if(last === 0)
-        return false;
-
-    if(useDigest){
-        var digest = getDigest(range, skip);
-        var col = range.getNumColumns() + 1;
-
-        var data = sheet.getRange(1, col, last, 1).getValues();
-        return data.flat().includes(digest);
-    }else{
-        // search all other rows
-    }
-}
-
-/**
- * Appends cell to end of range containing digest of range values.
- *
- * Can be used to create a digest column and used with {@link isDuplicate} to check for duplicates more efficiently.
- *
- * @param {Range} range Range to add digest to
- * @param {number} skip Columns to skip from start of range (eg. to avoid timestamp)
- * @param {String} digest Calculated digest (will be calculated if not provided)
- * @returns {Range} Range with digest cell appended
- */
-function addDigest(range, skip=1, digest=null){
-    // Get digest
-    digest = digest === null ? getDigest(range, skip) : digest;
-
-    // Extend range to append a cell
-    range = range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() + 1);
-
-    // Add digest to newly appended cell
-    range.getCell(1, range.getNumColumns()).setValue(digest);
-
-    return range; // Return extended range
 }

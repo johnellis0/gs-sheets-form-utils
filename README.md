@@ -1,7 +1,14 @@
 # Google Scripts Spreadsheet Form Utilities
-Google Apps Script utilities for using Google Forms with Google Sheets
+Google Scripts utility library for using Google Forms with Google Sheets.
 
-# Examples
+Features:
+- Detect & remove/flag duplicate submissions
+- Split form submissions into per-month / per-year sheets
+- Move submissions to bottom of specific sheet, allowing both form submissions and manual entries to be ordered sequentially
+- Automatically archive submissions
+- Check if row is blank despite checkbox data validations
+
+# Example usage
 
 ## Move form submissions onto monthly sheets
 
@@ -24,6 +31,10 @@ This uses a digest column which is appended to the end of the moved range, this 
 
 Using a digest column improves performance as only one column needs to be checked vs how many are in the range.
 
+### Calculate duplicate yourself
+
+This allows for more customization of actions to take if it is a duplicate; eg. not moving the range at all.
+
 ```javascript
 function onFormSubmit(e){
     var range = e.range;
@@ -35,7 +46,33 @@ function onFormSubmit(e){
     range = addDigest(range);
 
     if(duplicate)
-    range.setBackground("red");
+        range.setBackground("red");
+}
+```
+
+### Using duplicate callback
+
+`moveToFirstEmptyRow` and `copyToFirstEmptyRow` can take a callback as the 4th argument which will be ran if the range is detected as a duplicate. The 3rd argument is whether to use a digest column or not. More info and examples available in the API Reference below.
+
+```javascript
+function onFormSubmit(e){
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    moveToFirstEmptyRow(e.range, sheet, true, (range) => { // Move range to sheet "Responses" with callback if duplicate
+        range.setBackground("red"); // Highlight moved range in red if it is a duplicate
+    })
+}
+```
+
+## Process form submissions in bulk
+
+```javascript
+function scheduledBulkProcess(){
+    var submissionsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    var sheet = getPeriodicSheet("month");
+
+
 }
 ```
 
@@ -43,10 +80,10 @@ function onFormSubmit(e){
 ## Functions
 
 <dl>
-<dt><a href="#moveToFirstEmptyRow">moveToFirstEmptyRow(range, sheet)</a> ⇒ <code>Range</code></dt>
+<dt><a href="#moveToFirstEmptyRow">moveToFirstEmptyRow(range, sheet, digest, duplicateCallback)</a> ⇒ <code>Range</code></dt>
 <dd><p>Moves range to first empty row in sheet</p>
 </dd>
-<dt><a href="#copyToFirstEmptyRow">copyToFirstEmptyRow(range, sheet)</a> ⇒ <code>Range</code></dt>
+<dt><a href="#copyToFirstEmptyRow">copyToFirstEmptyRow(range, sheet, digest, duplicateCallback)</a> ⇒ <code>Range</code></dt>
 <dd><p>Copies range to first empty row in sheet</p>
 </dd>
 <dt><a href="#trimRowRange">trimRowRange(range, amount)</a> ⇒ <code>Range</code></dt>
@@ -88,16 +125,18 @@ SHA1 as the digest algorithm</p>
 
 <a name="moveToFirstEmptyRow"></a>
 
-## moveToFirstEmptyRow(range, sheet) ⇒ <code>Range</code>
+## moveToFirstEmptyRow(range, sheet, digest, duplicateCallback) ⇒ <code>Range</code>
 Moves range to first empty row in sheet
 
 **Kind**: global function  
 **Returns**: <code>Range</code> - New range  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| range | <code>Range</code> | Range to move |
-| sheet | <code>Sheet</code> | Sheet to insert range into |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| range | <code>Range</code> |  | Range to move |
+| sheet | <code>Sheet</code> |  | Sheet to insert range into |
+| digest | <code>boolean</code> | <code>false</code> | Whether to add digest to destination range |
+| duplicateCallback | <code>function</code> | <code></code> | Callback for if the range is detected as a duplicate. Will use digest duplicate detection if `digest` is set to true. Callback will be called with the destination range as the first parameter. |
 
 **Example**  
 ```js
@@ -107,25 +146,47 @@ function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
     moveToFirstEmptyRow(e.range, sheet);
 }
 ```
+**Example**  
+```js
+function onFormSubmit(e){
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    moveToFirstEmptyRow(e.range, sheet, true, (range) => { // Move range to sheet "Responses" with duplicate callback
+        range.setBackground("red"); // Highlight moved range in red if it is a duplicate
+    })
+}
+```
 <a name="copyToFirstEmptyRow"></a>
 
-## copyToFirstEmptyRow(range, sheet) ⇒ <code>Range</code>
+## copyToFirstEmptyRow(range, sheet, digest, duplicateCallback) ⇒ <code>Range</code>
 Copies range to first empty row in sheet
 
 **Kind**: global function  
 **Returns**: <code>Range</code> - New range  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| range | <code>Range</code> | Range to copy |
-| sheet | <code>Sheet</code> | Sheet to insert range into |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| range | <code>Range</code> |  | Range to copy |
+| sheet | <code>Sheet</code> |  | Sheet to insert range into |
+| digest | <code>boolean</code> | <code>false</code> | Whether to add digest to destination range |
+| duplicateCallback | <code>function</code> | <code></code> | Callback for if the range is detected as a duplicate. Will use digest duplicate detection if `digest` is set to true. Callback will be called with the destination range as the first parameter. |
 
 **Example**  
 ```js
 function onFormSubmit(e){ // Copy all form submissions to sheet "Responses"
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
-    moveToFirstEmptyRow(e.range, sheet);
+    copyToFirstEmptyRow(e.range, sheet);
+}
+```
+**Example**  
+```js
+function onFormSubmit(e){
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    copyToFirstEmptyRow(e.range, sheet, true, (range) => { // Copy range to sheet "Responses" with duplicate callback
+        range.setBackground("red"); // Highlight moved range in red if it is a duplicate
+    })
 }
 ```
 <a name="trimRowRange"></a>
