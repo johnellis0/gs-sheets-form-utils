@@ -170,7 +170,7 @@ function getPeriodicSheet(period="month",
  * @param {boolean} useDigest Whether to use a digest column or if to check row values individually
  * @param {number} last Last row to check
  * @param {number} skip Columns to skip when calculating digest
- * @returns {boolean}
+ * @returns {boolean} Whether the range occurs on the sheet or not
  */
 function isDuplicate(range,
                      sheet,
@@ -189,7 +189,7 @@ function isDuplicate(range,
         var data = sheet.getRange(1, col, last, 1).getValues();
         return data.flat().includes(digest);
     }else{
-        // search all other rows
+        throw "Digest required for duplication check";
     }
 }
 
