@@ -14,6 +14,7 @@
  * @param {boolean} digest Whether to add digest to destination range
  * @param {function} duplicateCallback Callback for if the range is detected as a duplicate. Will use digest duplicate
  * detection if `digest` is set to true. Callback will be called with the destination range as the first parameter.
+ * @param {boolean} useLock Whether to use a Lock to prevent concurrent excecutions
  * @returns {Range} New range
  * @example
 function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
@@ -30,9 +31,18 @@ function onFormSubmit(e){
     })
 }
  */
-function moveToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null){
-    let destination = copyToFirstEmptyRow(range, sheet, digest, duplicateCallback);
+function moveToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null, useLock=true){
+    if(useLock){
+        var lock = LockService.getScriptLock();
+        lock.waitLock(300000); //Wait to get lock
+    }
+
+    let destination = copyToFirstEmptyRow(range, sheet, digest, duplicateCallback, false);
     range.getSheet().deleteRow(range.getRow());
+
+    if(useLock)
+        lock.releaseLock();
+
     return destination
 }
 
@@ -43,6 +53,7 @@ function moveToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null)
  * @param {boolean} digest Whether to add digest to destination range
  * @param {function} duplicateCallback Callback for if the range is detected as a duplicate. Will use digest duplicate
  * detection if `digest` is set to true. Callback will be called with the destination range as the first parameter.
+ * @param {boolean} useLock Whether to use a Lock to prevent concurrent excecutions
  * @returns {Range} New range
  * @example
  function onFormSubmit(e){ // Copy all form submissions to sheet "Responses"
@@ -59,7 +70,12 @@ function onFormSubmit(e){
     })
 }
  */
-function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null){
+function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null, useLock=true){
+    if(useLock){
+        var lock = LockService.getScriptLock();
+        lock.waitLock(300000); //Wait to get lock
+    }
+
     let duplicate = duplicateCallback !== null && isDuplicate(range, sheet, digest);
     let firstEmpty = getFirstEmptyRow(sheet);
     let destination = sheet.getRange(firstEmpty.getRow(), firstEmpty.getColumn(), 1, range.getNumColumns());
@@ -70,6 +86,9 @@ function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null)
         destination = addDigest(destination);
     if(duplicate)
         duplicateCallback(destination);
+
+    if(useLock)
+        lock.releaseLock();
 
     return destination;
 }
