@@ -131,7 +131,7 @@ function getYearlySheetName(shift=0){
  * Returns copy of template sheet
  *
  * @param template
- * @returns {*}
+ * @returns {Sheet}
  */
 function getNewSheetFromTemplate(template){
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -169,6 +169,12 @@ function isRowEmpty(range, ignoreCheckbox=true){
     return true;
 }
 
+/**
+ *
+ * @param sheetFrom
+ * @param sheetTo
+ * @param deleteFromSource
+ */
 function sweep(sheetFrom, sheetTo, deleteFromSource=true){
     if(deleteFromSource){
         // Get ranges & move them across (in reverse so deleting a row does not shift ranges below it)
@@ -182,3 +188,30 @@ function sweep(sheetFrom, sheetTo, deleteFromSource=true){
     }
 }
 
+function getDigest(range, skip=1, encoding=Utilities.DigestAlgorithm.MD5){
+    var values = range.getValues()[0].slice(skip);
+
+    return Utilities.base64Encode(Utilities.computeDigest(encoding, values.join()));
+}
+
+function isDuplicate(range, sheet, useDigest=true, last=null){
+    last = last !== null ? last : sheet.getLastRow();
+
+    if(last === 1)
+        return false;
+
+    if(useDigest){
+        var digest = getDigest(range);
+        var col = range.getNumColumns() + 1;
+
+        var data = sheet.getRange(1, col, last, 1).getValues();
+        return data.flat().includes(digest);
+    }else{
+        // search all other rows
+    }
+}
+
+function addDigest(range, skip, encoding){
+    var digestCell = range.getSheet().getRange(range.getRow(), range.getColumn()+range.getNumColumns());
+    digestCell.setValue(getDigest(range, skip, encoding));
+}
