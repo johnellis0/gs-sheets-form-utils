@@ -101,7 +101,7 @@ function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null,
  * @param {String} period Sheet period, values from: "month", "year"
  * @param {boolean} abbreviated Whether to use abbreviated names (eg. AUG / August)
  * @param {number} shift Time periods to shift by (+ or -)
- * @param {String} template Name of template sheet for sheet creation
+ * @param {String} templateName Name of template sheet for sheet creation
  * @returns Sheet
  * @example
  // For example if the date were 01/01/2020 it would give the following sheet names:
@@ -133,7 +133,7 @@ function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=nu
 
     if(!sheet){
         if(template){
-            sheet = getNewSheetFromTemplate(template);
+            sheet = getNewSheetFromTemplate(templateName);
             sheet.setName(sheetName);
         }else{
             sheet = ss.insertSheet(sheetName);
