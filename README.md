@@ -86,7 +86,7 @@ function scheduledBulkProcess(){
 <dt><a href="#copyToFirstEmptyRow">copyToFirstEmptyRow(range, sheet, digest, duplicateCallback, useLock, ignoreCheckboxes)</a> ⇒ <code>Range</code></dt>
 <dd><p>Copies range to first empty row in sheet</p>
 </dd>
-<dt><a href="#getPeriodicSheet">getPeriodicSheet(period, abbreviated, shift, templateName)</a> ⇒</dt>
+<dt><a href="#getPeriodicSheet">getPeriodicSheet(period, abbreviated, shift, templateName)</a> ⇒ <code>Sheet</code></dt>
 <dd><p>Returns current periodic sheet.</p>
 <p>Sheet will be created if it does not exist - a named template sheet can be supplied for this.</p>
 </dd>
@@ -180,13 +180,12 @@ function onFormSubmit(e){
 ```
 <a name="getPeriodicSheet"></a>
 
-## getPeriodicSheet(period, abbreviated, shift, templateName) ⇒
+## getPeriodicSheet(period, abbreviated, shift, templateName) ⇒ <code>Sheet</code>
 Returns current periodic sheet.
 
 Sheet will be created if it does not exist - a named template sheet can be supplied for this.
 
 **Kind**: global function  
-**Returns**: Sheet  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -217,6 +216,7 @@ be included by [addDigest](#addDigest), allowing it to find duplicates more effi
 and just 'hide' the digest column on the spreadsheet.
 
 **Kind**: global function  
+**Returns**: <code>boolean</code> - Whether the range occurs on the sheet or not  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
