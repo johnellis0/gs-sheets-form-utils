@@ -171,7 +171,7 @@ Moves range to first empty row in sheet
 function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
-    moveToFirstEmptyRow(e.range, sheet);
+    FormUtils.moveToFirstEmptyRow(e.range, sheet);
 }
 ```
 **Example**  
@@ -179,7 +179,7 @@ function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
 function onFormSubmit(e){
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
-    moveToFirstEmptyRow(e.range, sheet, true, (range) => { // Move range to sheet "Responses" with duplicate callback
+    FormUtils.moveToFirstEmptyRow(e.range, sheet, true, (range) => { // Move range to sheet "Responses" with duplicate callback
         range.setBackground("red"); // Highlight moved range in red if it is a duplicate
     })
 }
@@ -206,7 +206,7 @@ Copies range to first empty row in sheet
 function onFormSubmit(e){ // Copy all form submissions to sheet "Responses"
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
-    copyToFirstEmptyRow(e.range, sheet);
+    FormUtils.copyToFirstEmptyRow(e.range, sheet);
 }
 ```
 **Example**  
@@ -214,7 +214,7 @@ function onFormSubmit(e){ // Copy all form submissions to sheet "Responses"
 function onFormSubmit(e){
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
-    copyToFirstEmptyRow(e.range, sheet, true, (range) => { // Copy range to sheet "Responses" with duplicate callback
+    FormUtils.copyToFirstEmptyRow(e.range, sheet, true, (range) => { // Copy range to sheet "Responses" with duplicate callback
         range.setBackground("red"); // Highlight moved range in red if it is a duplicate
     })
 }
@@ -238,14 +238,14 @@ Sheet will be created if it does not exist - a named template sheet can be suppl
 **Example**  
 ```js
 // For example if the date were 01/01/2020 it would give the following sheet names:
- getPeriodicSheet("month"); // JAN20
- getPeriodicSheet("year"); // 2020
- getPeriodicSheet("month", false); // January 2020
- getPeriodicSheet("month", true, 1); // MAR20
- getPeriodicSheet("month", true, -1); // DEC19
+ FormUtils.getPeriodicSheet("month"); // JAN20
+ FormUtils.getPeriodicSheet("year"); // 2020
+ FormUtils.getPeriodicSheet("month", false); // January 2020
+ FormUtils.getPeriodicSheet("month", true, 1); // MAR20
+ FormUtils.getPeriodicSheet("month", true, -1); // DEC19
 
  var templateName = "Template";
- getPeriodicSheet("month", true, 0, templateName); // Will make a copy of "Template" called 'JAN20'
+ FormUtils.getPeriodicSheet("month", true, 0, templateName); // Will make a copy of "Template" called 'JAN20'
 ```
 <a name="isDuplicate"></a>
 
