@@ -197,6 +197,11 @@ function addDigest(range, skip=1, digest=null){
     return range; // Return extended range
 }
 
+function addDateFormat(range, dateCol=1, time=false){
+    range.getCell(1, dateCol).dateRange.setNumberFormat("dd/MM/yyyy"); //Set new format
+    return range; // Return range for chaining
+}
+
 /**
  *
  * @param sheetFrom
