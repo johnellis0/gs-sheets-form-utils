@@ -17,13 +17,13 @@
  * @param {boolean} useLock Whether to use a Lock to prevent concurrent excecutions
  * @returns {Range} New range
  * @example
-function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
+ function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
     moveToFirstEmptyRow(e.range, sheet);
 }
  * @example
-function onFormSubmit(e){
+ function onFormSubmit(e){
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
     moveToFirstEmptyRow(e.range, sheet, true, (range) => { // Move range to sheet "Responses" with duplicate callback
@@ -114,7 +114,7 @@ function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null,
  var templateName = "Template";
  getPeriodicSheet("month", true, 0, templateName); // Will make a copy of "Template" called 'JAN20'
  */
-function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=null){
+function getPeriodicSheet(period="month", abbreviated=true, shift=0, templateName=null){
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
     let sheetName;
@@ -144,7 +144,12 @@ function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=nu
 }
 
 /**
- * Checks sheet for a duplicate of range
+ * Checks sheet for to see if range is a duplicate of an existing row.
+ *
+ * Setting `useDigest` to true will treat the column after the last column in the range as a digest column, which can
+ * be included by {@link addDigest}, allowing it to find duplicates more efficiently. It is recommended to use this mode
+ * and just 'hide' the digest column on the spreadsheet.
+ *
  * @param {Range} range Range to check for a duplicate of
  * @param {Sheet} sheet Sheet to check for duplicates
  * @param {boolean} useDigest Whether to use a digest column or if to check row values individually
@@ -154,8 +159,6 @@ function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=nu
  */
 function isDuplicate(range, sheet, useDigest=true, last=null, skip=1){
     last = last !== null ? last : sheet.getLastRow();
-
-    Logger.log(last);
 
     if(last === 0)
         return false;
@@ -218,6 +221,7 @@ function sweep(sheetFrom, sheetTo, deleteFromSource=true){
  * @param {Range} range Range to trim
  * @param {number} amount How many columns to remove from range
  * @returns {Range} Shortened range
+ * @ignore
  */
 function trimRowRange(range, amount){
     return range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() - amount);
@@ -242,6 +246,7 @@ function getFirstEmptyRow(sheet){
  *
  * @param abbreviated - Whether to use abbreviated names
  * @param shift - Time periods to shift by (+/-)
+ * @ignore
  */
 function getMonthlySheetName(abbreviated=true, shift=0){
     const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -273,6 +278,8 @@ function getMonthlySheetName(abbreviated=true, shift=0){
  *
  * @param shift
  * @returns {number}
+ * @ignore
+ *
  */
 function getYearlySheetName(shift=0){
     var date = new Date();
@@ -285,6 +292,7 @@ function getYearlySheetName(shift=0){
  *
  * @param template
  * @returns {Sheet}
+ * @ignore
  */
 function getNewSheetFromTemplate(template){
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -294,7 +302,13 @@ function getNewSheetFromTemplate(template){
     return ss.getSheetByName("Copy of "+template);
 }
 
-
+/**
+ *
+ * @param sheet
+ * @param excludeFrozen
+ * @returns {Range[]}
+ * @ignore
+ */
 function getRangesInUse(sheet, excludeFrozen=true) {
     var frozenRows = excludeFrozen ? sheet.getFrozenRows() : 0;
 
@@ -319,6 +333,7 @@ function getRangesInUse(sheet, excludeFrozen=true) {
  * @param {Range} range Range to check
  * @param {boolean} ignoreCheckbox Whether to
  * @returns {boolean} Whether the range is empty or not
+ * @ignore
  */
 function isRangeEmpty(range, ignoreCheckbox=true){
     if(!ignoreCheckbox)
@@ -333,7 +348,7 @@ function isRangeEmpty(range, ignoreCheckbox=true){
 
 /**
  * Calculate the digest of given range. Default settings skip the first cell (timestamp for form submissions) and use
- * SHA1 as the digest algorithm
+ * SHA1 as the digest algorithm.
  * @param {Range} range Range to calculate the digest of
  * @param {number} skip How many columns to skip
  * @param {Utilities.DigestAlgorithm} encoding Digest algorithm encoding to use
@@ -341,8 +356,6 @@ function isRangeEmpty(range, ignoreCheckbox=true){
  */
 function getDigest(range, skip=1, encoding=Utilities.DigestAlgorithm.SHA_1){
     var values = range.getValues()[0].slice(skip);
-
-    Logger.log(values);
 
     return Utilities.base64Encode(Utilities.computeDigest(encoding, values.join()));
 }
