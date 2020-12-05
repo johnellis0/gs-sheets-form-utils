@@ -8,6 +8,44 @@ Features:
 - Automatically archive submissions
 - Check if row is blank despite checkbox data validations
 
+# Install
+
+## As library
+
+To install as a library directly in Google Scripts follow the below instructions:
+
+*Google Scripts Editor > Resources > Libraries > Enter **Script ID** in Add a library > Select latest version > Save*
+
+**Script ID:** `1Rez6KOQDFg6RpI1sNXoaxSneLcwjXUT4eHTROuYcE5L9BuTs1D06pcbn`
+
+![image](https://user-images.githubusercontent.com/34400721/101267807-fb6df500-3754-11eb-80da-c423aaf38c27.png)
+
+If you install like this you will need to prefix all the methods by whatever is in the **Identifier** box, with the default being FormUtils.
+
+```javascript
+function onFormSubmit(e){
+    var range = e.range;
+    var sheet = FormUtils.getPeriodicSheet("month");
+
+    range = FormUtils.moveToFirstEmptyRow(range, sheet);
+}
+```
+
+## Manually
+
+You can also copy the source file, `src/FormUtils.js` directly into your Scripts project.
+
+If you install via this method you do not have to prefix the methods with a module name, example:
+
+```javascript
+function onFormSubmit(e){
+    var range = e.range;
+    var sheet = getPeriodicSheet("month");
+
+    range = moveToFirstEmptyRow(range, sheet);
+}
+```
+
 # Example usage
 
 ## Move form submissions onto monthly sheets
@@ -17,9 +55,9 @@ This will move the form submissions onto a different sheet each month.
 ```javascript
 function onFormSubmit(e){
     var range = e.range;
-    var sheet = getPeriodicSheet("month");
+    var sheet = FormUtils.getPeriodicSheet("month");
 
-    range = moveToFirstEmptyRow(range, sheet);
+    range = FormUtils.moveToFirstEmptyRow(range, sheet);
 }
 ```
 
@@ -40,10 +78,10 @@ function onFormSubmit(e){
     var range = e.range;
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
-    var duplicate = isDuplicate(range, sheet);
+    var duplicate = FormUtils.isDuplicate(range, sheet);
 
-    range = moveToFirstEmptyRow(range, sheet);
-    range = addDigest(range);
+    range = FormUtils.moveToFirstEmptyRow(range, sheet);
+    range = FormUtils.addDigest(range);
 
     if(duplicate)
         range.setBackground("red");
@@ -58,7 +96,7 @@ function onFormSubmit(e){
 function onFormSubmit(e){
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
-    moveToFirstEmptyRow(e.range, sheet, true, (range) => { // Move range to sheet "Responses" with callback if duplicate
+    FormUtils.moveToFirstEmptyRow(e.range, sheet, true, (range) => { // Move range to sheet "Responses" with callback if duplicate
         range.setBackground("red"); // Highlight moved range in red if it is a duplicate
     })
 }
@@ -70,7 +108,7 @@ function onFormSubmit(e){
 function scheduledBulkProcess(){
     var submissionsSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
-    var sheet = getPeriodicSheet("month");
+    var sheet = FormUtils.getPeriodicSheet("month");
 
 
 }
@@ -102,6 +140,9 @@ and just &#39;hide&#39; the digest column on the spreadsheet.</p>
 </dd>
 <dt><a href="#sweep">sweep(sheetFrom, sheetTo, deleteFromSource)</a></dt>
 <dd></dd>
+<dt><a href="#getOrCreateSheet">getOrCreateSheet(sheetName, template)</a> ⇒ <code>Sheet</code></dt>
+<dd><p>Gets sheet named <code>sheetName</code>, or creates from template if it doesn&#39;t exist</p>
+</dd>
 <dt><a href="#getDigest">getDigest(range, skip, encoding)</a> ⇒ <code>string</code></dt>
 <dd><p>Calculate the digest of given range. Default settings skip the first cell (timestamp for form submissions) and use
 SHA1 as the digest algorithm.</p>
@@ -252,6 +293,18 @@ Can be used to create a digest column and used with [isDuplicate](#isDuplicate) 
 | sheetFrom |  | 
 | sheetTo |  | 
 | deleteFromSource | <code>true</code> | 
+
+<a name="getOrCreateSheet"></a>
+
+## getOrCreateSheet(sheetName, template) ⇒ <code>Sheet</code>
+Gets sheet named `sheetName`, or creates from template if it doesn't exist
+
+**Kind**: global function  
+
+| Param |
+| --- |
+| sheetName | 
+| template | 
 
 <a name="getDigest"></a>
 

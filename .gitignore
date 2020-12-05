@@ -1,11 +1,7 @@
 .idea
 
-# clasp
-.clasp.json
-src/appsscript.json
-
 # jsdoc
 jsdoc.txt
 
 # testing
-src/test.js
+test.js

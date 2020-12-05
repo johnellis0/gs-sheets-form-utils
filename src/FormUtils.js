@@ -147,7 +147,7 @@ function getPeriodicSheet(period="month",
     var sheet = ss.getSheetByName(sheetName);
 
     if(!sheet){
-        if(template){
+        if(templateName){
             sheet = getNewSheetFromTemplate(templateName);
             sheet.setName(sheetName);
         }else{
@@ -360,6 +360,20 @@ function getNewSheetFromTemplate(template){
     ss.getSheetByName(template).copyTo(ss);
 
     return ss.getSheetByName("Copy of "+template);
+}
+
+/**
+ * Gets sheet named `sheetName`, or creates from template if it doesn't exist
+ * @param sheetName
+ * @param template
+ * @returns {Sheet}
+ */
+function getOrCreateSheet(sheetName, template){
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+
+    var sheet = ss.getSheetByName(sheetName);
+
+    return sheet ? sheet : getNewSheetFromTemplate(template);
 }
 
 /**
