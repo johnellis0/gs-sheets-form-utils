@@ -1,6 +1,44 @@
 # Google Scripts Spreadsheet Form Utilities
 Google Apps Script utilities for using Google Forms with Google Sheets
 
+# Example usage
+
+## Move form submissions onto monthly sheets
+
+This will move the form submissions onto a different sheet each month.
+
+```javascript
+function onFormSubmit(e){
+    var range = e.range;
+    var sheet = getPeriodicSheet("month");
+
+    range = moveToFirstEmptyRow(range, sheet);
+}
+```
+
+## Highlight duplicated submissions
+
+This will highlight any duplicate entries.
+
+This uses a digest column which is appended to the end of the moved range, this column can be hidden on the sheet if you don't want it visible.
+
+Using a digest column improves performance as only one column needs to be checked vs how many are in the range.
+
+```javascript
+function onFormSubmit(e){
+    var range = e.range;
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    var duplicate = isDuplicate(range, sheet);
+
+    range = moveToFirstEmptyRow(range, sheet);
+    range = addDigest(range);
+
+    if(duplicate)
+        range.setBackground("red");
+}
+```
+
 # API Reference
 {{>main}}
 
