@@ -217,14 +217,19 @@ function sweep(sheetFrom, sheetTo, deleteFromSource=true){
 }
 
 /**
- * Returns range with specified amount of columns removed from the end
+ * Returns range with specified amount of columns removed from the range
  * @param {Range} range Range to trim
- * @param {number} amount How many columns to remove from range
+ * @param {number} amount How many columns to remove from range. Positive values remove from the end, negative values
+ * from the front
  * @returns {Range} Shortened range
  * @ignore
  */
 function trimRowRange(range, amount){
-    return range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() - amount);
+    if(amount < 0){ // Remove from start
+        return range.getSheet().getRange(range.getRow(), range.getColumn() + amount, 1, range.getNumColumns() + amount);
+    }else{ // Remove from end
+        return range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() - amount);
+    }
 }
 
 /**
