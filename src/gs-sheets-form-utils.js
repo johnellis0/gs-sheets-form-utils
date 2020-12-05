@@ -69,7 +69,19 @@ function getFirstEmptyRange(sheet){
 function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=null){
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
-    let sheetName = period == "month" ? getMonthlySheetName(abbreviated, shift) : getYearlySheetName(shift);
+    let sheetName;
+
+    switch(period){
+        case "month":
+            sheetName = getMonthlySheetName(abbreviated, shift);
+            break;
+        case "year":
+            sheetName = getYearlySheetName(shift);
+            break;
+        default:
+            throw "Period not found: " + period;
+    }
+
     var sheet = ss.getSheetByName(sheetName);
 
     if(!sheet){
