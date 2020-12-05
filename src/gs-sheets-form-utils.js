@@ -8,48 +8,58 @@
  */
 
 /**
- * Moves range to sheet (destructive)
- *
- * @param range
- * @param sheet
+ * Moves range to first empty row in sheet
+ * @param {Range} range Range to move
+ * @param {Sheet} sheet Sheet to insert range into
+ * @returns {Range} New range
+ * @example
+function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    moveToFirstEmptyRow(e.range, sheet);
+}
  */
-function moveSubmissionToSheet(range, sheet){
-    let destination = copySubmissionToSheet(range, sheet);
+function moveToFirstEmptyRow(range, sheet){
+    let destination = copyToFirstEmptyRow(range, sheet);
     range.getSheet().deleteRow(range.getRow());
     return destination
 }
 
 /**
- * Copies range to sheet
- *
- * @param range
- * @param sheet
+ * Copies range to first empty row in sheet
+ * @param {Range} range Range to copy
+ * @param {Sheet} sheet Sheet to insert range into
+ * @returns {Range} New range
+ * @example
+function onFormSubmit(e){ // Copy all form submissions to sheet "Responses"
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
+
+    moveToFirstEmptyRow(e.range, sheet);
+}
  */
-function copySubmissionToSheet(range, sheet){
-    let destination = getFirstEmptyRange(sheet);
+function copyToFirstEmptyRow(range, sheet){
+    let destination = getFirstEmptyRow(sheet);
     range.copyTo(destination, {contentsOnly:true});
 
     return sheet.getRange(destination.getRow(), destination.getColumn(), 1, range.getNumColumns());
 }
 
 /**
- * Returns range with end values omitted.
- * Useful to remove unnecessary form fields
- *
- * @param range
- * @param amount - Amount of values to omit from end of range.
+ * Returns range with specified amount of columns removed from the end
+ * @param {Range} range Range to trim
+ * @param {number} amount How many columns to remove from range
+ * @returns {Range} Shortened range
  */
 function trimRowRange(range, amount){
     return range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() - amount);
 }
 
 /**
- * Returns a 1x1 range at the beginning of the first empty row in the given Sheet
  *
- * @param sheet
- * @returns {*}
+ * @param {Sheet} sheet
+ * @returns {Range}
  */
-function getFirstEmptyRange(sheet){
+function getFirstEmptyRow(sheet){
     var first_empty_row = sheet.getLastRow() + 1;
     sheet.insertRowBefore(first_empty_row);
 
@@ -58,19 +68,29 @@ function getFirstEmptyRange(sheet){
 
 /**
  * Returns current periodic sheet.
- * Sheet will be created if it does not exist - a named template shift can be supplied
  *
- * @param period - "month" / "year"
- * @param abbreviated - Whether to use abbreviated names
- * @param shift - Time periods to shift by (+/-)
- * @param template - Name of template sheet for sheet creation
+ * Sheet will be created if it does not exist - a named template sheet can be supplied for this.
+ *
+ * @param {String} period Sheet period, values from: "month", "year"
+ * @param {boolean} abbreviated Whether to use abbreviated names (eg. AUG / August)
+ * @param {number} shift Time periods to shift by (+ or -)
+ * @param {String} template Name of template sheet for sheet creation
  * @returns Sheet
+ * @example
+// For example if the date were 01/01/2020 it would give the following sheet names:
+getPeriodicSheet("month"); // JAN20
+getPeriodicSheet("year"); // 2020
+getPeriodicSheet("month", false); // January 2020
+getPeriodicSheet("month", true, 1); // MAR20
+getPeriodicSheet("month", true, -1); // DEC19
+
+var templateName = "Template";
+getPeriodicSheet("month", true, 0, templateName); // Will make a copy of "Template" called 'JAN20'
  */
 function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=null){
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
     let sheetName;
-
     switch(period){
         case "month":
             sheetName = getMonthlySheetName(abbreviated, shift);
@@ -98,6 +118,8 @@ function getPeriodicSheet(period="month", abbreviated=true, shift=0, template=nu
 
 /**
  * Returns full/abbreviated sheet name for current month (or shifted by +/- x months)
+ *
+ * See {@link getPeriodicSheet} for examples
  *
  * @param abbreviated - Whether to use abbreviated names
  * @param shift - Time periods to shift by (+/-)
@@ -173,9 +195,18 @@ function getRangesInUse(sheet, excludeFrozen=true) {
     return ranges;
 }
 
-function isRowEmpty(range, ignoreCheckbox=true){
+/**
+ * Checks if range is empty. Can ignore Checkbox cells (which are always filled).
+ * @param {Range} range Range to check
+ * @param {boolean} ignoreCheckbox Whether to
+ * @returns {boolean} Whether the range is empty or not
+ */
+function isRangeEmpty(range, ignoreCheckbox=true){
+    if(!ignoreCheckbox)
+        return range.isBlank();
+
     range.getValues()[0].forEach((val, i) => {
-        if(val !== "" && (ignoreCheckbox && range.getDataValidations()[0][i] !== SpreadsheetApp.DataValidationCriteria.CHECKBOX))
+        if(val !== "" && range.getDataValidations()[0][i] !== SpreadsheetApp.DataValidationCriteria.CHECKBOX)
             return false;
     });
     return true;
@@ -191,29 +222,50 @@ function sweep(sheetFrom, sheetTo, deleteFromSource=true){
     if(deleteFromSource){
         // Get ranges & move them across (in reverse so deleting a row does not shift ranges below it)
         getRangesInUse(sheetFrom).reverse().forEach((range) => {
-            moveSubmissionToSheet(range, sheetTo);
+            moveToFirstEmptyRow(range, sheetTo);
         });
     }else{
         getRangesInUse(sheetFrom).forEach((range) => {
-            copySubmissionToSheet(range, sheetTo);
+            copyToFirstEmptyRow(range, sheetTo);
         });
     }
 }
 
-function getDigest(range, skip=1, encoding=Utilities.DigestAlgorithm.MD5){
+/**
+ * Calculate the digest of given range. Default settings skip the first cell (timestamp for form submissions) and use
+ * SHA1 as the digest algorithm
+ * @param {Range} range Range to calculate the digest of
+ * @param {number} skip How many columns to skip
+ * @param {Utilities.DigestAlgorithm} encoding Digest algorithm encoding to use
+ * @returns {string} Calculated digest
+ */
+function getDigest(range, skip=1, encoding=Utilities.DigestAlgorithm.SHA_1){
     var values = range.getValues()[0].slice(skip);
+
+    Logger.log(values);
 
     return Utilities.base64Encode(Utilities.computeDigest(encoding, values.join()));
 }
 
-function isDuplicate(range, sheet, useDigest=true, last=null){
+/**
+ * Checks sheet for a duplicate of range
+ * @param {Range} range Range to check for a duplicate of
+ * @param {Sheet} sheet Sheet to check for duplicates
+ * @param {boolean} useDigest Whether to use a digest column or if to check row values individually
+ * @param {number} last Last row to check
+ * @param {number} skip Columns to skip when calculating digest
+ * @returns {boolean}
+ */
+function isDuplicate(range, sheet, useDigest=true, last=null, skip=1){
     last = last !== null ? last : sheet.getLastRow();
 
-    if(last === 1)
+    Logger.log(last);
+
+    if(last === 0)
         return false;
 
     if(useDigest){
-        var digest = getDigest(range);
+        var digest = getDigest(range, skip);
         var col = range.getNumColumns() + 1;
 
         var data = sheet.getRange(1, col, last, 1).getValues();
@@ -223,7 +275,25 @@ function isDuplicate(range, sheet, useDigest=true, last=null){
     }
 }
 
-function addDigest(range, skip, encoding){
-    var digestCell = range.getSheet().getRange(range.getRow(), range.getColumn()+range.getNumColumns());
-    digestCell.setValue(getDigest(range, skip, encoding));
+/**
+ * Appends cell to end of range containing digest of range values.
+ *
+ * Can be used to create a digest column and used with {@link isDuplicate} to check for duplicates more efficiently.
+ *
+ * @param {Range} range Range to add digest to
+ * @param {number} skip Columns to skip from start of range (eg. to avoid timestamp)
+ * @param {String} digest Calculated digest (will be calculated if not provided)
+ * @returns {Range} Range with digest cell appended
+ */
+function addDigest(range, skip=1, digest=null){
+    // Get digest
+    digest = digest === null ? getDigest(range, skip) : digest;
+
+    // Extend range to append a cell
+    range = range.getSheet().getRange(range.getRow(), range.getColumn(), 1, range.getNumColumns() + 1);
+
+    // Add digest to newly appended cell
+    range.getCell(1, range.getNumColumns()).setValue(digest);
+
+    return range; // Return extended range
 }
