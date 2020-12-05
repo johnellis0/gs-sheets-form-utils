@@ -19,8 +19,8 @@ function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
     moveToFirstEmptyRow(e.range, sheet);
 }
  */
-function moveToFirstEmptyRow(range, sheet){
-    let destination = copyToFirstEmptyRow(range, sheet);
+function moveToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null){
+    let destination = copyToFirstEmptyRow(range, sheet, digest, duplicateCallback);
     range.getSheet().deleteRow(range.getRow());
     return destination
 }
@@ -37,11 +37,19 @@ function onFormSubmit(e){ // Copy all form submissions to sheet "Responses"
     moveToFirstEmptyRow(e.range, sheet);
 }
  */
-function copyToFirstEmptyRow(range, sheet){
-    let destination = getFirstEmptyRow(sheet);
+function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null){
+    let duplicate = duplicateCallback !== null && isDuplicate(range, sheet, digest);
+    let firstEmpty = getFirstEmptyRow(sheet);
+    let destination = sheet.getRange(firstEmpty.getRow(), firstEmpty.getColumn(), 1, range.getNumColumns());
+
     range.copyTo(destination, {contentsOnly:true});
 
-    return sheet.getRange(destination.getRow(), destination.getColumn(), 1, range.getNumColumns());
+    if(digest)
+        destination = addDigest(destination);
+    if(duplicate)
+        duplicateCallback(destination);
+
+    return destination;
 }
 
 /**
