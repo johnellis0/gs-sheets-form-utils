@@ -15,6 +15,7 @@
  * @param {function} duplicateCallback Callback for if the range is detected as a duplicate. Will use digest duplicate
  * detection if `digest` is set to true. Callback will be called with the destination range as the first parameter.
  * @param {boolean} useLock Whether to use a Lock to prevent concurrent excecutions
+ * @param {boolean} ignoreCheckboxes Whether to ignore checkbox cells when determining if row is empty
  * @returns {Range} New range
  * @example
  function onFormSubmit(e){ // Move all form submissions to sheet "Responses"
@@ -31,13 +32,18 @@
     })
 }
  */
-function moveToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null, useLock=true){
+function moveToFirstEmptyRow(range,
+                             sheet,
+                             digest=false,
+                             duplicateCallback=null,
+                             useLock=true,
+                             ignoreCheckboxes=true){
     if(useLock){
         var lock = LockService.getScriptLock();
         lock.waitLock(300000); //Wait to get lock
     }
 
-    let destination = copyToFirstEmptyRow(range, sheet, digest, duplicateCallback, false);
+    let destination = copyToFirstEmptyRow(range, sheet, digest, duplicateCallback, false, ignoreCheckboxes);
     range.getSheet().deleteRow(range.getRow());
 
     if(useLock)
@@ -54,6 +60,7 @@ function moveToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null,
  * @param {function} duplicateCallback Callback for if the range is detected as a duplicate. Will use digest duplicate
  * detection if `digest` is set to true. Callback will be called with the destination range as the first parameter.
  * @param {boolean} useLock Whether to use a Lock to prevent concurrent excecutions
+ * @param {boolean} ignoreCheckboxes Whether to ignore checkbox cells when determining if row is empty
  * @returns {Range} New range
  * @example
  function onFormSubmit(e){ // Copy all form submissions to sheet "Responses"
@@ -62,7 +69,7 @@ function moveToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null,
     copyToFirstEmptyRow(e.range, sheet);
 }
  * @example
-function onFormSubmit(e){
+ function onFormSubmit(e){
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Responses");
 
     copyToFirstEmptyRow(e.range, sheet, true, (range) => { // Copy range to sheet "Responses" with duplicate callback
@@ -70,14 +77,19 @@ function onFormSubmit(e){
     })
 }
  */
-function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null, useLock=true){
+function copyToFirstEmptyRow(range,
+                             sheet,
+                             digest=false,
+                             duplicateCallback=null,
+                             useLock=true,
+                             ignoreCheckboxes=true){
     if(useLock){
         var lock = LockService.getScriptLock();
         lock.waitLock(300000); //Wait to get lock
     }
 
     let duplicate = duplicateCallback !== null && isDuplicate(range, sheet, digest);
-    let firstEmpty = getFirstEmptyRow(sheet);
+    let firstEmpty = getFirstEmptyRow(sheet, 1, ignoreCheckboxes);
     let destination = sheet.getRange(firstEmpty.getRow(), firstEmpty.getColumn(), 1, range.getNumColumns());
 
     range.copyTo(destination, {contentsOnly:true});
@@ -114,7 +126,10 @@ function copyToFirstEmptyRow(range, sheet, digest=false, duplicateCallback=null,
  var templateName = "Template";
  getPeriodicSheet("month", true, 0, templateName); // Will make a copy of "Template" called 'JAN20'
  */
-function getPeriodicSheet(period="month", abbreviated=true, shift=0, templateName=null){
+function getPeriodicSheet(period="month",
+                          abbreviated=true,
+                          shift=0,
+                          templateName=null){
     var ss = SpreadsheetApp.getActiveSpreadsheet();
 
     let sheetName;
@@ -157,7 +172,11 @@ function getPeriodicSheet(period="month", abbreviated=true, shift=0, templateNam
  * @param {number} skip Columns to skip when calculating digest
  * @returns {boolean}
  */
-function isDuplicate(range, sheet, useDigest=true, last=null, skip=1){
+function isDuplicate(range,
+                     sheet,
+                     useDigest=true,
+                     last=null,
+                     skip=1){
     last = last !== null ? last : sheet.getLastRow();
 
     if(last === 0)
