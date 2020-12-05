@@ -114,7 +114,7 @@ function copyToFirstEmptyRow(range,
  * @param {boolean} abbreviated Whether to use abbreviated names (eg. AUG / August)
  * @param {number} shift Time periods to shift by (+ or -)
  * @param {String} templateName Name of template sheet for sheet creation
- * @returns Sheet
+ * @returns {Sheet}
  * @example
  // For example if the date were 01/01/2020 it would give the following sheet names:
  getPeriodicSheet("month"); // JAN20
